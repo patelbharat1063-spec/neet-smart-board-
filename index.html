@@ -128,6 +128,16 @@ body[data-theme="warm"]{--bg:#241a20;--panel:#35242a;--panel2:#432d31;--line:#65
 @media(max-width:760px){.vis-grid{grid-template-columns:1fr}.vis-side{border-right:0;border-bottom:1px solid var(--line,#334466)}.vis-activity-list{grid-template-columns:repeat(2,minmax(0,1fr))}.vis-work{padding:12px}.vis-stage{min-height:240px;padding:7px}.vis-toolbar-right{width:100%;justify-content:space-between}.vis-toolbar select{flex:1}.vis-foot{font-size:9px}}
 
 
+/* Unified subject workspace navigation */
+.subjectbar{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 18px;padding:8px;border:1px solid var(--line,#334466);border-radius:14px;background:rgba(30,45,75,.28)}
+.subjectbtn{min-height:42px;min-width:112px;padding:10px 18px;border:1px solid var(--line,#405477);border-radius:10px;background:transparent;color:var(--text);font-weight:800;cursor:pointer;transition:background .18s,border-color .18s,transform .18s}
+.subjectbtn:hover{border-color:#55c4bc;transform:translateY(-1px)}
+.subjectbtn.active{background:linear-gradient(135deg,#245b75,#176d70);border-color:#55c4bc;color:#fff;box-shadow:0 5px 16px rgba(20,120,125,.18)}
+.subjectbtn:focus-visible{outline:3px solid #8de5da;outline-offset:2px}
+#view-biology .pagehead{align-items:center}
+#view-biology .bio-layout{align-items:start}
+#view-biology .chapterlist{overscroll-behavior:contain;scrollbar-gutter:stable}
+@media(max-width:600px){.subjectbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:6px}.subjectbtn{min-width:0;padding:10px 5px;font-size:12px}.bio-layout{grid-template-columns:minmax(0,1fr)!important}.bio-layout>#bioDetailCard{min-width:0}}
 .vis-cloud{background:linear-gradient(145deg,rgba(24,37,70,.96),rgba(17,27,52,.98))}.vis-cloud-actions{display:flex;gap:8px;flex-wrap:wrap}.vis-cloud .field{margin:10px 0}.vis-cloud textarea{width:100%;background:#101832;color:var(--text);border:1px solid #34436f;border-radius:10px;padding:11px;resize:vertical}.vis-cloud-saved{display:grid;gap:8px}.vis-cloud-item{border:1px solid #34436f;background:#111a35;border-radius:11px;padding:11px;display:flex;gap:10px;align-items:flex-start;justify-content:space-between}.vis-cloud-item strong{display:block;font-size:12px}.vis-cloud-item small{display:block;color:var(--muted);font-size:10px;margin-top:4px;white-space:pre-wrap}.vis-cloud-item .vis-cloud-item-actions{display:flex;gap:6px;flex-wrap:wrap}.vis-cloud-item .btn{padding:7px 9px;font-size:10px}.vis-cloud-busy{opacity:.65;pointer-events:none}@media(max-width:700px){.vis-cloud-item{display:block}.vis-cloud-item-actions{margin-top:8px}}
 
 
@@ -144,9 +154,7 @@ body[data-theme="warm"]{--bg:#241a20;--panel:#35242a;--panel2:#432d31;--line:#65
     <button class="navitem" data-view="lessons"><span class="ico">▤</span><span class="navtext">Lessons & Documents</span></button>
   </div>
   <div class="navgroup"><div class="navlabel">Learn</div>
-    <button class="navitem" data-view="biology"><span class="ico">◉</span><span class="navtext">Biology</span></button>
-    <button class="navitem" data-view="chemistry"><span class="ico">⚗</span><span class="navtext">Chemistry</span></button>
-    <button class="navitem" data-view="physics"><span class="ico">ϟ</span><span class="navtext">Physics</span></button>
+    <button class="navitem" data-view="biology"><span class="ico">◉</span><span class="navtext">Subjects · Biology / Chemistry / Physics</span></button>
     <button class="navitem" data-view="visuals"><span class="ico">◇</span><span class="navtext">Diagrams & Simulations</span></button>
   </div>
   <div class="navgroup"><div class="navlabel">Assess</div>
@@ -231,7 +239,7 @@ body[data-theme="warm"]{--bg:#241a20;--panel:#35242a;--panel2:#432d31;--line:#65
   </section>
 
   <section class="workspace" id="view-biology">
-    <div class="pagehead"><div><div class="eyebrow">NEET learning workspace · subject-wise navigation</div><h2 id="subjectHeading">Biology · Chapters</h2><p>Choose Biology, Chemistry or Physics to see only that subject’s chapters. Biology opens its built-in notes; Chemistry and Physics chapters filter the existing Supabase Notes Studio. Existing simulations remain in the Simulation Lab.</p></div><span class="tag" id="bioContentStatus">Built-in Biology content</span></div>
+    <div class="pagehead"><div><div class="eyebrow">NEET learning workspace · subject-wise navigation</div><h2 id="subjectHeading">Biology · Chapters</h2><p>Use the subject tabs to switch between Biology, Chemistry and Physics. Each subject has its own chapter list; saved cloud notes are filtered by the selected subject. All existing diagrams and simulations remain in the Simulation Lab.</p></div><span class="tag" id="bioContentStatus">Built-in Biology content</span></div>
     <div class="subjectbar"><button class="subjectbtn active" data-subject-view="biology" aria-pressed="true">Biology</button><button class="subjectbtn" data-subject-view="chemistry" aria-pressed="false">Chemistry</button><button class="subjectbtn" data-subject-view="physics" aria-pressed="false">Physics</button></div>
     <div class="grid contentgrid bio-layout">
       <div class="card"><div class="sectiontitle"><div><h3>Chapter library</h3><p id="bioChapterCount">34 existing chapter entries</p></div><button class="btn" id="bioExportAll">Export Biology notes</button></div><div class="field"><label for="chapterSearch">Search chapter or concept</label><input id="chapterSearch" placeholder="Search Biology chapters..."></div><div class="chapterlist" id="chapterList" style="max-height:62vh;overflow:auto"></div></div>
