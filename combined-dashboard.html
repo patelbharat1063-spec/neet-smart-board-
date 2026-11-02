@@ -62,7 +62,7 @@ async function loadNeetAnalysis(){
   while(true){var q=c.from('neet_questions').select('id,chapter_id,chapter_name,subject,question,options,correct_index');if(from)q=q.gte('created_at',from);if(to)q=q.lt('created_at',new Date(new Date(to+'T00:00:00').getTime()+86400000).toISOString());var res=await q.order('id').range(offset,offset+page-1);if(res.error)throw res.error;var part=res.data||[];qs=qs.concat(part);if(part.length<page)break;offset+=page;if(offset>100000)throw Error('Safety limit reached while paging questions')}
   var cr=await c.from('neet_chapters').select('id,subject,name').order('sort_order');if(cr.error)throw cr.error;var chapters=cr.data||[],byId=new Map(chapters.map(x=>[x.id,x]));
   var subjects={},chapterCounts={},nullLinks=0,orphan=0,cross=0,nameMismatch=0,blank=0,badOptions=0,badAnswer=0,missingExplanation=0,stemGroups=new Map(),exactGroups=new Map(),sameChapterGroups=new Map();
-  function norm(x){return String(x||'').toLowerCase().normalize('NFKC').replace(/\\s+/g,' ').replace(/[^\\p{L}\\p{N} ]/gu,'').trim()}
+  function norm(x){return String(x||'').toLowerCase().normalize('NFKC').replace(/\s+/g,' ').replace(/[^\p{L}\p{N} ]/gu,'').trim()}
   qs.forEach(function(x){
    var sub=x.subject||'(blank)';subjects[sub]=(subjects[sub]||0)+1;
    if(!x.question||!String(x.question).trim())blank++;
