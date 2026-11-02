@@ -722,11 +722,18 @@ $('mcqLoginMode')?.addEventListener('change',()=>{const student=$('mcqLoginMode'
    const {data:sessionData,error:sessionError}=await client.auth.getSession();if(sessionError)throw sessionError;
    if(!sessionData?.session)throw Error('Your teacher session has expired. Sign in again through MCQ Question Bank.');
    status('Loading chapter list and chapter-linked Notes Studio content…');
-   const [{data:chapterData,error:chapterError},{data,error}]=await Promise.all([
-    client.from('neet_chapters').select('id,subject,name,sort_order').order('subject',{ascending:true}).order('sort_order',{ascending:true}),
-    client.from('neet_content_items').select('id,chapter_id,subject,title,content_type,body,source_label,created_at,updated_at').order('updated_at',{ascending:false}).limit(1000)
-   ]);if(chapterError)throw chapterError;if(error)throw error;
-   cloudChapters=chapterData||[];savedNotes=(data||[]).filter(n=>!n.subject||['botany','biology','chemistry','physics','zoology'].includes(String(n.subject).toLowerCase()));
+   const {data:chapterData,error:chapterError}=await client.from('neet_chapters').select('id,subject,name,sort_order').order('subject',{ascending:true}).order('sort_order',{ascending:true});
+   if(chapterError)throw chapterError;
+   cloudChapters=chapterData||[];
+   let noteRows=[],noteOffset=0,noteBatch=1000;
+   while(true){
+    const {data:notePage,error:noteError}=await client.from('neet_content_items').select('id,chapter_id,subject,title,content_type,body,source_label,created_at,updated_at').order('updated_at',{ascending:false}).range(noteOffset,noteOffset+noteBatch-1);
+    if(noteError)throw noteError;
+    const pageRows=notePage||[];noteRows=noteRows.concat(pageRows);
+    if(pageRows.length<noteBatch)break;
+    noteOffset+=noteBatch;
+   }
+   savedNotes=noteRows.filter(n=>!n.subject||['botany','biology','chemistry','physics','zoology'].includes(String(n.subject).toLowerCase()));
    fillCloudChapterOptions();render();status('Loaded '+cloudChapters.length+' Supabase chapters and '+savedNotes.length+' chapter-linked content records. No database records changed.',true);
   }catch(e){status('Cloud notes error: '+(e?.message||String(e)));$('cloudNotesResults').innerHTML='<div class="emptybox"><div><strong>Cloud notes could not be loaded</strong>'+esc(e?.message||String(e))+'<br><br>No database records were changed. If this is a permission error, check authenticated SELECT access to public.neet_content_items.</div></div>';}
   finally{$('cloudNotesReload').disabled=false;}
