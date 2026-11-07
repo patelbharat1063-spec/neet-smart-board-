@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10162f">
+<title>NEET Smart Board · MCQ Classification</title>
+<style>
+:root{color-scheme:dark;--bg:#0d1228;--panel:#151d3b;--line:#2b3764;--text:#f4f6ff;--muted:#aab5d7;--teal:#39d5c2;--blue:#5794ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 60% -10%,#28376d 0,transparent 42%),var(--bg);color:var(--text);font:14px system-ui,-apple-system,Segoe UI,sans-serif}.wrap{max-width:920px;margin:auto;padding:24px 16px 60px}.top{display:flex;gap:12px;align-items:center;margin-bottom:24px}.logo{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--blue),#9a78ff,var(--teal));display:grid;place-items:center;font-weight:900}.muted{color:var(--muted)}h1{font-size:clamp(23px,4vw,34px);margin:0 0 6px}.card{background:linear-gradient(145deg,#192346,#121a35);border:1px solid var(--line);border-radius:17px;padding:18px;margin:14px 0}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#101832;border:1px solid #2b3966;border-radius:12px;padding:13px}.stat b{display:block;font-size:25px;margin-top:5px}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}button{border:1px solid #35436f;border-radius:11px;padding:11px 15px;background:#1b2649;color:white;font-weight:700;cursor:pointer}button.primary{background:linear-gradient(110deg,#387cf0,#7955e8);border:0}button.stop{background:#3a2039;border-color:#783d59}button:disabled{opacity:.45;cursor:not-allowed}.field{display:grid;gap:6px;margin:10px 0}.field input{width:100%;padding:12px;border:1px solid #34436f;border-radius:10px;background:#101832;color:white}.progress{height:12px;border-radius:99px;background:#0c142b;overflow:hidden;margin:12px 0}.bar{height:100%;width:0;background:linear-gradient(90deg,#3979e8,#39d5c2);transition:width .2s}.status{white-space:pre-wrap;line-height:1.6;background:#101832;border:1px solid #2b3966;padding:12px;border-radius:11px;max-height:280px;overflow:auto;font-size:12px}.notice{border-left:3px solid var(--teal);padding:10px 12px;background:#153044;border-radius:0 10px 10px 0;color:#d8fffa;line-height:1.55}.hide{display:none!important}@media(max-width:560px){.stats{grid-template-columns:1fr 1fr}.wrap{padding:17px 12px}.card{padding:14px}}
+</style>
+</head>
+<body><main class="wrap">
+<div class="top"><div class="logo">N</div><div><strong>NEET SMART BOARD</strong><div class="muted" style="font-size:11px">Teacher tools · MCQ classification</div></div></div>
+<h1>Classify the MCQ question bank</h1>
+<p class="muted">AI-assisted topic, question-type, difficulty and source classification for existing MCQs.</p>
+<section class="card">
+<div class="notice"><b>Data safety:</b> This process updates classification metadata only. It does not edit question text, options, correct answers, explanations, question IDs or student attempts. Existing topic names are retained; only blank topic names are filled. PYQ labels are assigned only when the source label explicitly supports them.</div>
+<div id="loginPanel" class="hide">
+<h3>Teacher / Admin sign in</h3>
+<div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="username"></div>
+<div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password"></div>
+<button id="loginBtn" class="primary">Sign in</button>
+</div>
+<div id="workPanel" class="hide">
+<p id="who" class="muted"></p>
+<div class="stats">
+<div class="stat"><span class="muted">Total MCQs</span><b id="total">18,245</b></div>
+<div class="stat"><span class="muted">Classified</span><b id="done">0</b></div>
+<div class="stat"><span class="muted">Pending</span><b id="pending">0</b></div>
+</div>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<div class="muted" id="percent">0% classified</div>
+<div class="actions">
+<button id="one" class="primary">Classify next batch (15)</button>
+<button id="all">Start all pending batches</button>
+<button id="stop" class="stop" disabled>Pause after current batch</button>
+<button id="refresh">Refresh counts</button>
+</div>
+</div>
+</section>
+<section class="card"><h3>Classification log</h3><div id="log" class="status">Waiting for teacher sign-in.</div></section>
+<p class="muted" style="font-size:11px">AI processing uses your configured Supabase Edge Function and OpenAI API key. API usage charges may apply. Keep this page open during full processing. You can pause and resume; completed rows are not processed again.</p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(()=>{'use strict';
+const URL='https://laqbemctxffaglgkffms.supabase.co';
+const KEY='sb_publishable_ubNb3aq7BGNPUeYsr0V9Jg_SEW3wz6J';
+const $=id=>document.getElementById(id);
+const log=m=>{$('log').textContent=new Date().toLocaleTimeString()+'  '+m+'\n'+$('log').textContent;};
+let client=null,running=false,stopRequested=false;
+const fmt=n=>Number(n||0).toLocaleString();
+async function init(){
+ try{
+  if(!window.supabase?.createClient)throw Error('Supabase library did not load. Check internet and reload.');
+  client=window.neetSupabaseClient||window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  window.neetSupabaseClient=client;
+  const {data,error}=await client.auth.getSession();if(error)throw error;
+  if(!data.session){$('loginPanel').classList.remove('hide');log('Sign in with your approved teacher/admin account.');return;}
+  await authorize();
+ }catch(e){log(e.message||String(e));}
+}
+async function authorize(){
+ const {data:{user},error}=await client.auth.getUser();if(error||!user)throw Error('Sign-in session expired.');
+ const {data:p,error:pe}=await client.from('neet_profiles').select('role,approval_status,access_expires_at').eq('user_id',user.id).maybeSingle();
+ if(pe)throw pe;if(!p||p.approval_status!=='approved'||!['teacher','admin'].includes(p.role))throw Error('Only approved teachers/admins can classify MCQs.');
+ if(p.role!=='admin'&&p.access_expires_at&&new Date(p.access_expires_at)<=new Date())throw Error('Teacher access has expired.');
+ $('loginPanel').classList.add('hide');$('workPanel').classList.remove('hide');$('who').textContent='Signed in: '+(user.email||user.id)+' · '+p.role;
+ await refresh();
+}
+async function count(status){const q=client.from('neet_questions').select('id',{count:'exact',head:true});if(status)q.eq('classification_status',status);const {count,error}=await q;if(error)throw error;return count||0;}
+async function refresh(){
+ const [total,done,pending]=await Promise.all([count(null),count('classified'),count('pending')]);
+ $('total').textContent=fmt(total);$('done').textContent=fmt(done);$('pending').textContent=fmt(pending);
+ const pct=total?Math.round(done/total*100):100;$('bar').style.width=pct+'%';$('percent').textContent=pct+'% classified · '+fmt(total-done-pending)+' need review or failed';
+ $('one').disabled=running||pending===0;$('all').disabled=running||pending===0;
+ if(!pending&&!running)log('All pending MCQs are classified. Review any rows marked failed or needs_review in Supabase.');
+}
+async function batch(){
+ const {data,error}=await client.functions.invoke('neet-mcq-classify',{body:{batch_size:15}});
+ if(error)throw error;if(data?.error)throw Error(data.error);
+ if(data.processed)log('Classified '+data.processed+' MCQs; '+fmt(data.remaining)+' pending.');
+ if(data.errors?.length)log('Needs attention: '+data.errors.join(' | '));
+ await refresh();return data;
+}
+async function run(all){
+ if(running)return;running=true;stopRequested=false;$('one').disabled=true;$('all').disabled=true;$('stop').disabled=false;
+ try{
+  if(all){while(!stopRequested){const d=await batch();if(d.done||!d.processed)break;}}
+  else await batch();
+ }catch(e){log('Stopped: '+(e.message||String(e)));}
+ finally{running=false;$('stop').disabled=true;await refresh().catch(e=>log(e.message||String(e)));if(stopRequested)log('Paused. You can resume later; completed rows will be skipped.');}
+}
+$('loginBtn').addEventListener('click',async()=>{const b=$('loginBtn');b.disabled=true;try{const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;await authorize();}catch(e){log(e.message||String(e));}finally{b.disabled=false;}});
+$('one').addEventListener('click',()=>run(false));$('all').addEventListener('click',()=>run(true));$('stop').addEventListener('click',()=>{stopRequested=true;$('stop').disabled=true;log('Pause requested; current batch will finish first.');});$('refresh').addEventListener('click',()=>refresh().then(()=>log('Counts refreshed.')).catch(e=>log(e.message||String(e))));
+init();
+})();
+</script>
+</body></html>
