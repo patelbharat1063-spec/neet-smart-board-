@@ -610,12 +610,7 @@ function chapterText(i){const c=summaryFor(i);return `NEET Biology — ${c[1]}\n
 // The shared chapter-search handler routes to the active subject's list.
 $('bioDownloadChapter').addEventListener('click',()=>{if(!summaryFor(selectedBioIndex))return;downloadBio(`${summaryFor(selectedBioIndex)[1].replace(/[^a-z0-9]+/gi,'_')}_NEET_Biology_Notes.txt`,chapterText(selectedBioIndex),'text/plain;charset=utf-8')});
 $('bioPrintChapter').addEventListener('click',()=>{const c=summaryFor(selectedBioIndex);if(!c)return;const notes=(biologyDetailedNotes[c[1]]||[]).map(n=>`<li>${esc(n)}</li>`).join('');const w=window.open('','_blank');if(!w){alert('Allow pop-ups to print or save this chapter as PDF.');return;}w.document.write(`<!doctype html><html><head><title>${esc(c[1])} — NEET Biology</title><meta charset="utf-8"><style>body{font:15px/1.65 Arial,sans-serif;max-width:850px;margin:35px auto;color:#172033;padding:0 20px}h1,h2{color:#194b8d}li{margin:0 0 10px}.small{color:#52627a}</style></head><body><h1>${esc(c[1])}</h1><p class="small">${esc(c[0])} · ${esc(c[2])}</p><h2>Overview</h2><p>${esc(c[3])}</p><h2>Core concepts</h2><p>${esc(c[4])}</p><p>${esc(c[5])}</p><h2>Expanded revision notes</h2><ol>${notes}</ol><p class="small">NCERT-aligned revision aid. Verify against current official materials.</p><script>window.onload=()=>window.print()<\/script></body></html>`);w.document.close();});
-
-
-
-
-
-
+</script>
 
 <script id="neet-unacademy-pdf-catalogue">
 (()=>{'use strict';
