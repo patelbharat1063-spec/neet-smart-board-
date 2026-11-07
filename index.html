@@ -651,7 +651,7 @@ $('bioPrintChapter').addEventListener('click',()=>{const c=summaryFor(selectedBi
   current:'a413201b-6f53-4686-b24a-2a34e88670da',
   ac:'81032688-2d30-4aa2-a4e5-8636126d901a'
  };
- const pdf=(subject,chapterId,title,file)=>({subject,chapterId,title,sourceUrl:'https://unacademy.com/content/wp-content/uploads/sites/2/2022/10/'+file});
+ const pdf=(subject,chapterId,title,file,folder='2022/10')=>({subject,chapterId,title,sourceUrl:'https://unacademy.com/content/wp-content/uploads/sites/2/'+folder+'/'+file});
  // GitHub Pages refresh marker 2026-11-07
  const catalogue=[
   pdf('Botany',CH.living,'The Living World — Unacademy Notes','The-Living-World-Final.pdf'),
@@ -728,6 +728,34 @@ $('bioPrintChapter').addEventListener('click',()=>{const c=summaryFor(selectedBi
   pdf('Chemistry','c15148fe-7853-44fd-a168-f5be802df788','p-Block Elements — Part 2 — Unacademy Notes','25.-p-Block-Elements-Part-2.pdf'),
   pdf('Physics','252f5b6b-ea54-4800-bfc1-9d52f8d44b47','Electromagnetic Waves — Unacademy Notes','NEET_UG_Physics_Electromagnetic-Waves-Final-1.pdf'),
   pdf('Physics','e66ca43c-4848-41d3-bb5a-1008b1cf2cb7','Semiconductor Electronics — Unacademy Notes','NEET_UG_Physics_Semiconductor_Final.pdf'),
+
+  // Additional Unacademy chapter PDFs — Biology
+  pdf('Botany','f1e0b136-e2a9-45cc-8a01-87dc3275f305','Anatomy of Flowering Plants — Unacademy Notes','Anatomy-of-Flowering-Plants.pdf','2022/08'),
+  pdf('Botany','3d8c9b6e-6266-4516-a47e-1b4ec2397e25','Biotechnology: Principles and Processes — Unacademy Notes','Biotechnology-Principles-and-Processes.pdf','2022/08'),
+  pdf('Botany','9957f8ac-3260-4d54-ad86-279c193276b1','Transport in Plants — Unacademy Notes','Transport-in-Plants.pdf'),
+  pdf('Botany','b91c330f-537b-42f3-834e-4aeaaac2da9c','Reproduction in Organisms — Legacy Reference','Reproduction-in-organisms.pdf'),
+  pdf('Botany','5f33e4ba-781f-4525-8ede-83c11c845fc8','Strategies for Enhancement in Food Production — Legacy Reference','Strategies-for-Enhancement-in-Food-Production.pdf'),
+  pdf('Botany','9675d4f3-5140-4f1a-a475-5df07a5eda5a','Mineral Nutrition in Plants — Legacy Reference','Mineral-Nutrition-in-Plants.pdf'),
+  // Additional Unacademy chapter PDFs — Physics
+  pdf('Physics',CH.properties,'Elasticity — Unacademy Notes','NEET_UG_Physics_Elasticity_Final-1.pdf'),
+  pdf('Physics',CH.ktg,'Sound Waves — Unacademy Notes','NEET_UG_Physics_Sound-Wave_Final-1.pdf'),
+  pdf('Physics',CH.properties,'Mode of Heat Transfer — Unacademy Notes','NEET_UG_MODE-OF-HEAT-TRANSFER_NOTES_Final.pdf'),
+  pdf('Physics',CH.physicsMeasure,'Vectors — Unacademy Notes','NEET_UG_Phy_Vector.pdf'),
+  // Additional Unacademy chapter PDFs — Chemistry
+  pdf('Chemistry',CH.organic,'Nomenclature of Organic Compounds — Unacademy Notes','14.-Nomenclature-Notes.pdf'),
+  pdf('Chemistry','8a366db0-7b1d-4ec1-aa19-9ec1e78fcac0','States of Matter — Legacy Reference','5.-State-of-matter.pdf'),
+  pdf('Chemistry','3a35e28b-4c0f-4205-970a-6bf440bdbd71','Surface Chemistry — Legacy Reference','23.-Surface-Chemistry.pdf'),
+  pdf('Chemistry',CH.thermoChem,'Thermochemistry — Unacademy Notes','7.-Thermochemistry.pdf'),
+  pdf('Chemistry','8ff57715-b17f-420f-ac62-fb964bc3f2a4','Environmental Chemistry — Legacy Reference','18.-Environmental-Chemistry.pdf'),
+  pdf('Chemistry',CH.organic,'Reaction Mechanism — Unacademy Notes','16.-Reaction-Mechanism-Notes.pdf'),
+  pdf('Chemistry','e7ceea05-c923-4a48-8c9d-f4d517d7497e','s-Block Elements — Legacy Reference','12.-s-block-notes.pdf'),
+  pdf('Chemistry','602ddaa5-c79d-4957-90f2-d0404586d76c','Chemistry in Everyday Life — Legacy Reference','34.-Chemistry-Everyday-Life.pdf'),
+  pdf('Chemistry','67dcf6fe-2f55-46e6-8c1e-a6c3bb3d6e48','Hydrogen — Legacy Reference','11.-Hydrogen-Notes.pdf'),
+  pdf('Chemistry','e1d7f66d-22be-4dea-9a07-5820fe551a75','Solid State — Legacy Reference','19.-Solid-states-Notes.pdf'),
+  pdf('Chemistry',CH.equilibrium,'Ionic Equilibrium — Unacademy Notes','9.-Ionic-Equilibrium.pdf'),
+  pdf('Chemistry',CH.redox,'Redox Reactions — Unacademy Notes','10.-Redox-Reactions.pdf'),
+  pdf('Chemistry','a810b9cb-dfc1-4135-a76e-d513ac3b4d8a','Polymers — Legacy Reference','33.-Polymer-Notes.pdf'),
+
  ];
  const say=(s)=>{const el=$('neetPdfImportCount');if(el)el.textContent=s;};
  host.addEventListener('click',async()=>{
