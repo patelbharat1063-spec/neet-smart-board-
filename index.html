@@ -262,6 +262,12 @@ body[data-theme="warm"]{--bg:#241a20;--panel:#35242a;--panel2:#432d31;--line:#65
             <div class="field"><label for="neetPdfFile">Choose original PDF (max 50 MB)</label><input id="neetPdfFile" type="file" accept="application/pdf,.pdf"></div>
           </div>
           <button class="btn primary" id="neetPdfUploadBtn" type="button">Upload PDF to Supabase</button>
+          <div style="margin-top:14px;padding:13px;border:1px solid #42588b;border-radius:12px;background:#111b36">
+            <strong style="font-size:12px">Unacademy original PDF importer</strong>
+            <p style="font-size:11px;color:#aab5d7;line-height:1.6;margin:6px 0 10px">Imports listed public Unacademy PDFs directly into the private chapter folder in Supabase. Select Botany, Zoology, Physics or Chemistry above. Only approved teachers/admins can run an import.</p>
+            <button class="btn teal" id="neetPdfImportBtn" type="button">Import Unacademy PDFs for selected subject</button>
+            <span id="neetPdfImportCount" style="font-size:11px;color:#aab5d7;margin-left:8px">Catalogue ready to check</span>
+          </div>
         </div>
         <div class="sectiontitle" style="margin-top:18px"><div><h3>Available chapter PDFs</h3><p id="neetPdfCount">No PDF list loaded yet.</p></div><button class="btn" id="neetPdfReload" type="button">Refresh PDFs</button></div>
         <div id="neetPdfList"><div class="emptybox" style="min-height:90px"><div><strong>PDF library not loaded</strong>Sign in to view available PDFs.</div></div></div>
@@ -609,6 +615,125 @@ $('bioPrintChapter').addEventListener('click',()=>{const c=summaryFor(selectedBi
 
 
 
+
+
+<script id="neet-unacademy-pdf-catalogue">
+(()=>{'use strict';
+ const $=id=>document.getElementById(id);
+ const host=$('neetPdfImportBtn');if(!host)return;
+ const CH={
+  living:'51394d6b-8ed4-4466-9c18-e3cb998a41a9',
+  bioClass:'0f05c937-8c2a-4d52-a63e-c5f4d83cc6d3',
+  plantKingdom:'4ee57d61-0697-4cba-8a83-36c17c3268d7',
+  cell:'ba1fc386-b22e-493f-a271-fe3fc9dec83f',
+  biomolBio:'14550225-5393-4ac0-9d90-06e8cef31b3e',
+  cellCycle:'d6f54c68-d51f-4d38-b4c8-9ceed32848a0',
+  inheritance:'740b4086-3c0c-433b-a401-5813d67d54fb',
+  molecular:'3bfe57c2-db60-4d0f-937f-4a1a013ee603',
+  organisms:'9c22cbd4-4d59-4f14-9f78-8f8d3c851a53',
+  ecosystem:'827ea0c5-92d4-43e3-8f05-4ceed0c7ac9c',
+  animal:'dfb8e5d9-2d7a-4403-9a7e-c340129be8cb',
+  breathing:'14846005-1a20-4adb-9541-76410d7aec9b',
+  bodyFluids:'e6c956fc-7145-4851-8b12-14325a408edd',
+  evolution:'d352bc83-0441-48cb-9f69-1837e8ee9028',
+  mole:'5abbeda9-a605-43fa-b221-a79179f9e88e',
+  atomic:'71aa76bb-353a-4cb2-96c1-7e08eab42aaf',
+  bonding:'d3d4c9c7-b8eb-49c9-bb96-34f276ba42f1',
+  thermoChem:'d8c53fa1-b1fe-48b6-9709-a711f6913afa',
+  equilibrium:'0f1a8bcf-318a-4e3c-b575-986039d8adb6',
+  redox:'a9353f5f-3095-4991-90ad-dd5903ea04e6',
+  electrochem:'a9353f5f-3095-4991-90ad-dd5903ea04e6',
+  organic:'3e3ad730-babd-4646-8314-bf9c76fb968c',
+  biomolChem:'3f78420a-5054-472c-9af6-e588886813e1',
+  physicsMeasure:'ccda03b4-2014-4ba3-9c07-3109414cac8c',
+  kinematics:'68e1d116-e3fb-4758-a451-f6251a9e4e55',
+  work:'b8531411-cdaa-4392-8957-bcc935c9ed1f',
+  rotation:'f3dce3b0-c2c2-4c5d-83c0-756fd189c199',
+  gravitation:'e2a53984-c893-41c3-8c86-ed820d3d90ce',
+  properties:'ca3a4802-2f44-4df9-a40a-c04983872dc1',
+  thermoPhysics:'e87111a8-6fca-4860-b470-bd4a2481b509',
+  ktg:'25243653-dd4d-4b14-b528-be7465cccc2c',
+  current:'a413201b-6f53-4686-b24a-2a34e88670da',
+  ac:'81032688-2d30-4aa2-a4e5-8636126d901a'
+ };
+ const pdf=(subject,chapterId,title,file)=>({subject,chapterId,title,sourceUrl:'https://unacademy.com/content/wp-content/uploads/sites/2/2022/10/'+file});
+ const catalogue=[
+  pdf('Botany',CH.living,'The Living World — Unacademy Notes','The-Living-World-Final.pdf'),
+  pdf('Botany',CH.plantKingdom,'Plant Kingdom — Unacademy Notes','Plant-Kingdom.pdf'),
+  pdf('Botany',CH.ecosystem,'Ecosystem — Unacademy Notes','Ecosystem.pdf'),
+  pdf('Botany',CH.organisms,'Organisms and Populations — Unacademy Notes','Organisms-and-Populations.pdf'),
+  pdf('Botany',CH.bioClass,'Biological Classification — Unacademy Notes','Biological-Classification.pdf'),
+  pdf('Botany',CH.inheritance,'Principles of Inheritance and Variation — Unacademy Notes','Principles-of-Inheritance-and-Variation-min.pdf'),
+  pdf('Zoology',CH.animal,'Animal Kingdom — Unacademy Notes','Animal-Kingdom_Full-Chapter-Notes-1.pdf'),
+  pdf('Botany',CH.cell,'Cell: The Unit of Life — Unacademy Notes','Cell-The-Unit-of-Life.pdf'),
+  pdf('Zoology',CH.bodyFluids,'Body Fluids and Circulation — Unacademy Notes','Body-Fluids-and-Circulation-1.pdf'),
+  pdf('Zoology',CH.breathing,'Breathing and Exchange of Gases — Unacademy Notes','Breathing-and-Exchange-of-Gases-1.pdf'),
+  pdf('Botany',CH.biomolBio,'Biomolecules — Biology Unacademy Notes','Biomolecules-1.pdf'),
+  pdf('Botany',CH.molecular,'Molecular Basis of Inheritance — Unacademy Notes','MOLECULAR-BASIS-OF-INHERITANCE-NOTES-min.pdf'),
+  pdf('Botany',CH.cellCycle,'Cell Cycle and Cell Division — Unacademy Notes','Cell-Cycle-and-Cell-Division.pdf'),
+  pdf('Zoology',CH.evolution,'Evolution — Unacademy Notes','Evolution-3-min.pdf'),
+  pdf('Chemistry',CH.biomolChem,'Biomolecules — Chemistry Unacademy Notes','32.-Biomolecule-Notes.pdf'),
+  pdf('Chemistry',CH.thermoChem,'Chemical Thermodynamics — Unacademy Notes','6.-Thermodynamics.pdf'),
+  pdf('Chemistry',CH.organic,'Basic Principles of Organic Chemistry — Nomenclature Notes','Nomenclature-of-Organic-Compounds-Notes.pdf'),
+  pdf('Chemistry',CH.atomic,'Atomic Structure — Unacademy Notes','2.-Atomic-Structure.pdf'),
+  pdf('Chemistry',CH.mole,'Some Basic Concepts of Chemistry — Mole Concept Notes','1.-Mole-concept-Notes-2.pdf'),
+  pdf('Chemistry',CH.redox,'Redox Reactions — Unacademy Notes','Redox-Reaction-Notes.pdf'),
+  pdf('Chemistry',CH.electrochem,'Electrochemistry — Unacademy Notes','21.-Electrochemistry-Notes.pdf'),
+  pdf('Chemistry',CH.bonding,'Chemical Bonding and Molecular Structure — Unacademy Notes','4.-Chemical-bonding-Notes-min.pdf'),
+  pdf('Chemistry',CH.equilibrium,'Chemical and Ionic Equilibrium — Unacademy Notes','8.-Chemical-Equilibrium.pdf'),
+  pdf('Physics',CH.physicsMeasure,'Physics Units and Dimensions — Unacademy Notes','NEET_UG_Physics_Units-Dimensions_Final-1.pdf'),
+  pdf('Physics',CH.ac,'Alternating Current — Unacademy Notes','NEET_UG_Physics_Alternating-Current.pdf'),
+  pdf('Physics',CH.properties,'Thermal Expansion and Calorimetry — Unacademy Notes','NEET_UG_Physics_Thermal-Expansion-Calorimetry_Theory-Final-1.pdf'),
+  pdf('Physics',CH.properties,'Fluid Mechanics — Unacademy Notes','NEET_UG_Physics_Fluid-Mechanics_Final.pdf'),
+  pdf('Physics',CH.thermoPhysics,'Thermodynamics — Unacademy Notes','NEET_UG_THERMAL-PHYSICS_THERMODYNAMICS_Final.pdf'),
+  pdf('Physics',CH.work,'Work, Power and Energy — Unacademy Notes','NEET-UG_Physics_Work-Power-and-Energy-.pdf'),
+  pdf('Physics',CH.ktg,'Kinetic Theory of Gases — Unacademy Notes','NEET_UG_Physics_KTG_NOTES_final.pdf'),
+  pdf('Physics',CH.current,'Current Electricity — Unacademy Notes','Current-Electricity-final.pdf'),
+  pdf('Physics',CH.kinematics,'Projectile Motion — Unacademy Notes','Projectile-Motion_Process_Final.pdf'),
+  pdf('Physics',CH.kinematics,'Circular Motion — Unacademy Notes','Circular-Motion_TEXT.pdf'),
+  pdf('Physics',CH.kinematics,'Rectilinear Motion — Unacademy Notes','NEET_UG_Physics_RECTILINEAR-MOTION_Final.pdf'),
+  pdf('Physics',CH.properties,'Surface Tension and Viscosity — Unacademy Notes','NEET_UG_Physics_Surface-Tension-Viscosity_Final-1.pdf'),
+  pdf('Physics',CH.physicsMeasure,'Mathematical Tools — Unacademy Notes','Mathematical-Tools.pdf'),
+  pdf('Physics',CH.gravitation,'Gravitation — Unacademy Notes','NEET_UG_Physics_Gravitation_Final-1.pdf'),
+  pdf('Physics',CH.rotation,'Rotational Motion — Unacademy Notes','NEET_UG_Physics_Rotational-Motion-.pdf')
+ ];
+ const say=(s)=>{const el=$('neetPdfImportCount');if(el)el.textContent=s;};
+ host.addEventListener('click',async()=>{
+  host.disabled=true;
+  try{
+   let client=window.neetSupabaseClient;
+   if(!client){if(!window.supabase?.createClient)throw Error('Supabase client library did not load. Reload the app.');client=window.supabase.createClient('https://laqbemctxffaglgkffms.supabase.co','sb_publishable_ubNb3aq7BGNPUeYsr0V9Jg_SEW3wz6',{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});window.neetSupabaseClient=client;}
+   const {data:sessionData,error:sessionError}=await client.auth.getSession();if(sessionError)throw sessionError;
+   if(!sessionData?.session)throw Error('Sign in through MCQ Question Bank first.');
+   const {data:profile,error:profileError}=await client.from('neet_profiles').select('role,approval_status').eq('user_id',sessionData.session.user.id).maybeSingle();
+   if(profileError)throw profileError;
+   if(!profile||profile.approval_status!=='approved'||!['teacher','admin'].includes(String(profile.role).toLowerCase()))throw Error('Only approved teacher/admin accounts can import Unacademy PDFs.');
+   const subject=$('neetPdfSubject').value;
+   const todo=catalogue.filter(x=>x.subject===subject);
+   if(!todo.length)throw Error('No indexed PDFs are currently mapped for '+subject+'.');
+   if(!confirm('Import '+todo.length+' indexed Unacademy PDFs for '+subject+' into the private Supabase PDF library? Existing MCQs, student records and notes are not changed.'))return;
+   say('Importing '+todo.length+' PDFs…');
+   let uploaded=0,failed=0,results=[];
+   for(let i=0;i<todo.length;i+=5){
+    say('Importing batch '+(Math.floor(i/5)+1)+' of '+Math.ceil(todo.length/5)+' · '+subject);
+    const {data,error}=await client.functions.invoke('unacademy-pdf-import',{body:{items:todo.slice(i,i+5)}});
+    if(error)throw error;
+    if(!data?.results)throw Error('Importer returned an unexpected response.');
+    results.push(...data.results);
+    data.results.forEach(x=>{if(x.status==='uploaded')uploaded++;else failed++;});
+   }
+   const summary=uploaded+' uploaded · '+failed+' failed/rejected';
+   say(summary);
+   const status=$('neetPdfStatus');if(status)status.innerHTML='<span>✓</span><span>'+summary+'. Refreshing the private PDF library…</span>';
+   $('neetPdfReload')?.click();
+   if(failed){const details=results.filter(x=>x.status!=='uploaded').map(x=>x.title+': '+x.error).join('\n');alert(summary+'\n\n'+details);}
+   else alert('Import complete: '+summary+'. PDFs are now listed in the chapter library.');
+  }catch(e){say('Import stopped: '+(e?.message||String(e)));alert('Unacademy import failed: '+(e?.message||String(e)));}
+  finally{host.disabled=false;}
+ });
+ say(catalogue.length+' indexed PDFs · choose subject to import');
+})();
+</script>
 
 </body></html>`);w.document.close();});
 $('bioExportAll').addEventListener('click',()=>{const rows=[['Subject','Chapter','Topic','Overview','Core concept 1','Core concept 2','Expanded revision notes']];biologyContentChapters.forEach(c=>rows.push([c[0],c[1],c[2],c[3],c[4],c[5],(biologyDetailedNotes[c[1]]||[]).join('\n')]));const cell=v=>'"'+String(v??'').replace(/"/g,'""')+'"';downloadBio('NEET_Biology_34_Chapters_Notes.csv','\ufeff'+rows.map(r=>r.map(cell).join(',')).join('\r\n'),'text/csv;charset=utf-8')});
