@@ -274,6 +274,12 @@ body[data-theme="warm"]{--bg:#241a20;--panel:#35242a;--panel2:#432d31;--line:#65
             <button class="btn teal" id="classXIBiologyImportBtn" type="button">Import all 22 Class XI Biology PDFs</button>
             <span id="classXIBiologyImportStatus" role="status" style="display:block;font-size:11px;color:#c1dce5;margin-top:9px">Ready · 22 PDFs · chapter-wise Botany/Zoology</span>
           </div>
+          <div style="margin-top:14px;padding:13px;border:1px solid #8b7130;border-radius:12px;background:#302817">
+            <strong style="font-size:12px">Class XII Biology · Shared-link PDF importer</strong>
+            <p style="font-size:11px;color:#e5d8b5;line-height:1.6;margin:6px 0 10px">Imports all 16 original chapter PDFs from the same source into the private Supabase bucket. Botany: 9 chapters · Zoology: 7 chapters. Original PDFs are preserved; existing notes and files are not overwritten. Teacher/Admin sign-in required.</p>
+            <button class="btn teal" id="classXIIBiologyImportBtn" type="button">Import all 16 Class XII Biology PDFs</button>
+            <span id="classXIIBiologyImportStatus" role="status" style="display:block;font-size:11px;color:#e5d8b5;margin-top:9px">Ready · 16 PDFs · chapter-wise Botany/Zoology</span>
+          </div>
         </div>
         <div class="sectiontitle" style="margin-top:18px"><div><h3>Available chapter PDFs</h3><p id="neetPdfCount">No PDF list loaded yet.</p></div><button class="btn" id="neetPdfReload" type="button">Refresh PDFs</button></div>
         <div id="neetPdfList"><div class="emptybox" style="min-height:90px"><div><strong>PDF library not loaded</strong>Sign in to view available PDFs.</div></div></div>
@@ -1457,6 +1463,40 @@ btn.addEventListener('click',async()=>{btn.disabled=true;btn.textContent='Updati
       status(summary+(errors.length?' Review the importer status for errors.':' All PDFs are registered chapter-wise.'),failed===0);
     }catch(e){label.textContent='Import stopped after '+processed+' PDFs: '+(e?.message||String(e));status('Class XI PDF import did not complete: '+(e?.message||String(e)));}
     finally{classXIImportBtn.disabled=false;}
+  });
+
+  const classXIIImportBtn=$('classXIIBiologyImportBtn');
+  classXIIImportBtn?.addEventListener('click',async()=>{
+    const label=$('classXIIBiologyImportStatus');classXIIImportBtn.disabled=true;
+    let imported=0,already=0,failed=0,processed=0;const errors=[];
+    try{
+      await ensureClient();
+      if(!['teacher','admin'].includes(String(profile?.role||'').toLowerCase()))throw Error('Only approved Teacher/Admin accounts can run this import.');
+      const {data:sessionData,error:sessionError}=await client.auth.getSession();if(sessionError)throw sessionError;
+      const token=sessionData?.session?.access_token;if(!token)throw Error('Please sign in again through MCQ Question Bank.');
+      const total=16,batchSize=5;
+      for(let start=0;start<total;start+=batchSize){
+        label.textContent='Importing PDFs '+(start+1)+'–'+Math.min(total,start+batchSize)+' of '+total+'…';
+        const response=await fetch('https://laqbemctxffaglgkffms.supabase.co/functions/v1/import-class12-biology-pdfs',{
+          method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,'apikey':'sb_publishable_ubNb3aq7BGNPUeYsr0V9Jg_SEW3wz6J'},
+          body:JSON.stringify({start,limit:batchSize})
+        });
+        const payload=await response.json().catch(()=>({error:'Importer returned a non-JSON response.'}));
+        if(!response.ok)throw Error(payload.error||('Importer request failed with HTTP '+response.status));
+        for(const r of (payload.results||[])){
+          processed++;
+          if(r.status==='imported')imported++;
+          else if(r.status==='already_imported')already++;
+          else{failed++;errors.push((r.title||'PDF')+': '+(r.error||r.status));}
+        }
+        label.textContent='Processed '+processed+'/16 · newly imported '+imported+' · already present '+already+' · issues '+failed;
+      }
+      await loadItems();
+      const summary='Finished: '+imported+' imported, '+already+' already present, '+failed+' failed.';
+      label.textContent=summary+(errors.length?' First issue: '+errors[0]:'');
+      status(summary+(errors.length?' Review the importer status for errors.':' All PDFs are registered chapter-wise.'),failed===0);
+    }catch(e){label.textContent='Import stopped after '+processed+' PDFs: '+(e?.message||String(e));status('Class XII PDF import did not complete: '+(e?.message||String(e)));}
+    finally{classXIIImportBtn.disabled=false;}
   });
 $('neetPdfUploadBtn').addEventListener('click',upload);$('neetPdfReload').addEventListener('click',()=>init());$('neetPdfSubject').addEventListener('change',()=>{chapterOptions();renderItems()});$('neetPdfChapter').addEventListener('change',renderItems);
  $('neetPdfList').addEventListener('click',async e=>{const o=e.target.closest('[data-neet-pdf-open]'),d=e.target.closest('[data-neet-pdf-download]');if(!o&&!d)return;try{await ensureClient();await openPdf((o||d).dataset.neetPdfOpen|| (o||d).dataset.neetPdfDownload,!!d);}catch(err){status(err?.message||String(err));}});
