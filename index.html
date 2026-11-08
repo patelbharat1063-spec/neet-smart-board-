@@ -268,6 +268,12 @@ body[data-theme="warm"]{--bg:#241a20;--panel:#35242a;--panel2:#432d31;--line:#65
             <button class="btn teal" id="neetPdfImportBtn" type="button">Import Unacademy PDFs for selected subject</button>
             <span id="neetPdfImportCount" style="font-size:11px;color:#aab5d7;margin-left:8px">Catalogue ready to check</span>
           </div>
+          <div style="margin-top:14px;padding:13px;border:1px solid #287b83;border-radius:12px;background:#102b38">
+            <strong style="font-size:12px">Class XI Biology · Shared-link PDF importer</strong>
+            <p style="font-size:11px;color:#c1dce5;line-height:1.6;margin:6px 0 10px">Imports all 22 original chapter PDFs from the shared Class XI Biology source into the private Supabase bucket. Botany: 13 chapters · Zoology: 9 chapters. Files are kept unchanged; existing notes and PDFs are not overwritten. Teacher/Admin sign-in required.</p>
+            <button class="btn teal" id="classXIBiologyImportBtn" type="button">Import all 22 Class XI Biology PDFs</button>
+            <span id="classXIBiologyImportStatus" role="status" style="display:block;font-size:11px;color:#c1dce5;margin-top:9px">Ready · 22 PDFs · chapter-wise Botany/Zoology</span>
+          </div>
         </div>
         <div class="sectiontitle" style="margin-top:18px"><div><h3>Available chapter PDFs</h3><p id="neetPdfCount">No PDF list loaded yet.</p></div><button class="btn" id="neetPdfReload" type="button">Refresh PDFs</button></div>
         <div id="neetPdfList"><div class="emptybox" style="min-height:90px"><div><strong>PDF library not loaded</strong>Sign in to view available PDFs.</div></div></div>
@@ -1418,7 +1424,41 @@ btn.addEventListener('click',async()=>{btn.disabled=true;btn.textContent='Updati
  async function upload(){const btn=$('neetPdfUploadBtn');btn.disabled=true;try{await ensureClient();if(profile.role!=='teacher'&&profile.role!=='admin')throw Error('Only approved teachers can upload PDFs.');const chapterId=$('neetPdfChapter').value,subject=$('neetPdfSubject').value,file=$('neetPdfFile').files?.[0];if(!chapterId)throw Error('Choose the chapter for this PDF.');const chapter=chapters.find(c=>c.id===chapterId);if(!chapter||chapter.subject!==subject)throw Error('The selected chapter does not match the chosen subject.');if(!file)throw Error('Choose a PDF file first.');if(file.type!=='application/pdf'&&!file.name.toLowerCase().endsWith('.pdf'))throw Error('Only PDF files are accepted.');if(file.size>MAX)throw Error('This PDF is larger than the 50 MB limit.');if(file.size===0)throw Error('The selected PDF is empty.');const title=$('neetPdfTitle').value.trim()||file.name.replace(/\.pdf$/i,'');const safe=file.name.normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'_').replace(/^\.+/,'').slice(-120)||'notes.pdf';const path=subject+'/'+chapterId+'/'+Date.now()+'_'+safe;status('Uploading '+file.name+'…');const {error:upErr}=await client.storage.from(BUCKET).upload(path,file,{contentType:'application/pdf',upsert:false});if(upErr)throw upErr;const body=JSON.stringify({storage_bucket:BUCKET,storage_path:path,original_file_name:file.name,mime_type:'application/pdf',size_bytes:file.size,uploaded_at:new Date().toISOString()});const {error:dbErr}=await client.from('neet_content_items').insert({chapter_id:chapterId,subject,title,content_type:'resource',body,source_label:SOURCE});if(dbErr){await client.storage.from(BUCKET).remove([path]);throw dbErr;}$('neetPdfTitle').value='';$('neetPdfFile').value='';await loadItems();status('Uploaded and registered '+title+'. The PDF is stored privately in Supabase and linked to '+chapter.name+'.',true);}catch(e){status('PDF upload failed: '+(e?.message||String(e)));}finally{btn.disabled=false;}}
  async function openPdf(id,download){const item=items.find(x=>x.id===id);if(!item)return;const meta=parseBody(item.body);if(meta.storage_bucket!==BUCKET||!meta.storage_path)throw Error('This resource record does not contain a valid private Storage path.');if(download){const {data,error}=await client.storage.from(BUCKET).download(meta.storage_path);if(error)throw error;const url=URL.createObjectURL(data);const a=document.createElement('a');a.href=url;a.download=meta.original_file_name||((item.title||'NEET-notes')+'.pdf');document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}else{const {data,error}=await client.storage.from(BUCKET).createSignedUrl(meta.storage_path,900);if(error)throw error;const w=window.open(data.signedUrl,'_blank','noopener');if(!w)status('Pop-up blocked. Allow pop-ups to open the PDF.');}}
  async function init(){try{await ensureClient();await loadChapters();await loadItems();status('Private PDF library ready. '+items.length+' PDFs are registered.',true);}catch(e){status(e?.message||String(e));}}
- $('neetPdfUploadBtn').addEventListener('click',upload);$('neetPdfReload').addEventListener('click',()=>init());$('neetPdfSubject').addEventListener('change',()=>{chapterOptions();renderItems()});$('neetPdfChapter').addEventListener('change',renderItems);
+ 
+  const classXIImportBtn=$('classXIBiologyImportBtn');
+  classXIImportBtn?.addEventListener('click',async()=>{
+    const label=$('classXIBiologyImportStatus');classXIImportBtn.disabled=true;
+    let imported=0,already=0,failed=0,processed=0;const errors=[];
+    try{
+      await ensureClient();
+      if(!['teacher','admin'].includes(String(profile?.role||'').toLowerCase()))throw Error('Only approved Teacher/Admin accounts can run this import.');
+      const {data:sessionData,error:sessionError}=await client.auth.getSession();if(sessionError)throw sessionError;
+      const token=sessionData?.session?.access_token;if(!token)throw Error('Please sign in again through MCQ Question Bank.');
+      const total=22,batchSize=5;
+      for(let start=0;start<total;start+=batchSize){
+        label.textContent='Importing PDFs '+(start+1)+'–'+Math.min(total,start+batchSize)+' of '+total+'…';
+        const response=await fetch('https://laqbemctxffaglgkffms.supabase.co/functions/v1/import-class11-biology-pdfs',{
+          method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,'apikey':'sb_publishable_ubNb3aq7BGNPUeYsr0V9Jg_SEW3wz6J'},
+          body:JSON.stringify({start,limit:batchSize})
+        });
+        const payload=await response.json().catch(()=>({error:'Importer returned a non-JSON response.'}));
+        if(!response.ok)throw Error(payload.error||('Importer request failed with HTTP '+response.status));
+        for(const r of (payload.results||[])){
+          processed++;
+          if(r.status==='imported')imported++;
+          else if(r.status==='already_imported')already++;
+          else{failed++;errors.push((r.title||'PDF')+': '+(r.error||r.status));}
+        }
+        label.textContent='Processed '+processed+'/22 · newly imported '+imported+' · already present '+already+' · issues '+failed;
+      }
+      await loadItems();
+      const summary='Finished: '+imported+' imported, '+already+' already present, '+failed+' failed.';
+      label.textContent=summary+(errors.length?' First issue: '+errors[0]:'');
+      status(summary+(errors.length?' Review the importer status for errors.':' All PDFs are registered chapter-wise.'),failed===0);
+    }catch(e){label.textContent='Import stopped after '+processed+' PDFs: '+(e?.message||String(e));status('Class XI PDF import did not complete: '+(e?.message||String(e)));}
+    finally{classXIImportBtn.disabled=false;}
+  });
+$('neetPdfUploadBtn').addEventListener('click',upload);$('neetPdfReload').addEventListener('click',()=>init());$('neetPdfSubject').addEventListener('change',()=>{chapterOptions();renderItems()});$('neetPdfChapter').addEventListener('change',renderItems);
  $('neetPdfList').addEventListener('click',async e=>{const o=e.target.closest('[data-neet-pdf-open]'),d=e.target.closest('[data-neet-pdf-download]');if(!o&&!d)return;try{await ensureClient();await openPdf((o||d).dataset.neetPdfOpen|| (o||d).dataset.neetPdfDownload,!!d);}catch(err){status(err?.message||String(err));}});
  $('cloudNotesSubject')?.addEventListener('change',()=>{if(client)renderItems()});
  $('cloudNotesReload')?.addEventListener('click',()=>{if(client)loadItems().catch(e=>status(e?.message||String(e)))});
