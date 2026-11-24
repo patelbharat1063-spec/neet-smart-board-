@@ -787,8 +787,9 @@ renderBioList();showBioChapter(0);
 
  ];
  const say=(s)=>{const el=$('neetPdfImportCount');if(el)el.textContent=s;};
- host.addEventListener('click',async()=>{
-  host.disabled=true;
+ const importBtn=$('neetPdfImportBtn');
+ importBtn?.addEventListener('click',async()=>{
+  importBtn.disabled=true;
   try{
    let client=window.neetSupabaseClient;
    if(!client){if(!window.supabase?.createClient)throw Error('Supabase client library did not load. Reload the app.');client=window.supabase.createClient('https://laqbemctxffaglgkffms.supabase.co','sb_publishable_ubNb3aq7BGNPUeYsr0V9Jg_SEW3wz6',{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});window.neetSupabaseClient=client;}
@@ -818,7 +819,7 @@ renderBioList();showBioChapter(0);
    if(failed){const details=results.filter(x=>x.status!=='uploaded').map(x=>x.title+': '+x.error).join('\n');alert(summary+'\n\n'+details);}
    else alert('Import complete: '+summary+'. PDFs are now listed in the chapter library.');
   }catch(e){say('Import stopped: '+(e?.message||String(e)));alert('Unacademy import failed: '+(e?.message||String(e)));}
-  finally{host.disabled=false;}
+  finally{importBtn.disabled=false;}
  });
  say(catalogue.length+' indexed PDFs · choose subject to import');
 })();
