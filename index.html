@@ -860,6 +860,23 @@ renderBioList();showBioChapter(0);
  $('mcqClearFilters').addEventListener('click',()=>{$('mcqSubject').value='all';$('mcqChapter').value='all';$('mcqSearch').value='';$('mcqSource').value='';updateChapters();page=1;render()});
  $('mcqPrev').addEventListener('click',()=>{page=Math.max(1,page-1);render()});$('mcqNext').addEventListener('click',()=>{page++;render()});
  $('mcqExportCsv').addEventListener('click',()=>{const qs=filtered();const rows=[['id','subject','chapter_name','question','option_a','option_b','option_c','option_d','correct_index','explanation','source_label'],...qs.map(q=>[q.id,q.subject,q.chapter_name,q.question,...(Array.isArray(q.options)?q.options:[]),q.correct_index,q.explanation,q.source_label])];const csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const url=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='NEET_filtered_MCQ_bank.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)});
+ // Restore the existing session if Android reloads this page while the file picker is open.
+ (async()=>{
+  try{
+   await ensureClient();
+   const {data,error}=await client.auth.getSession();
+   if(error)throw error;
+   if(!data?.session)return;
+   const account=await checkAccountAccess();
+   window.neetSupabaseClient=client;
+   $('mcqConnect').disabled=true;
+   $('mcqSignout').disabled=false;
+   status('Session restored for '+(account.username||account.role||'your account')+'. Continue without signing in again.',true);
+   window.dispatchEvent(new CustomEvent('neet-supabase-session-ready'));
+  }catch(e){
+   status('Saved session could not be restored: '+(e?.message||String(e))+'. Your account and database records are unchanged.');
+  }
+ })();
 })();
 </script>
 
