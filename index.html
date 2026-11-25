@@ -261,7 +261,7 @@ body[data-theme="warm"]{--bg:#241a20;--panel:#35242a;--panel2:#432d31;--line:#65
             <div class="field"><label for="neetPdfSubject">Subject</label><select id="neetPdfSubject"><option>Botany</option><option>Zoology</option><option>Chemistry</option><option>Physics</option></select></div>
             <div class="field"><label for="neetPdfChapter">Chapter</label><select id="neetPdfChapter"><option value="">Loading chapters…</option></select></div>
             <div class="field"><label for="neetPdfTitle">PDF title</label><input id="neetPdfTitle" maxlength="180" placeholder="e.g. The Living World — Unacademy Notes"></div>
-            <div class="field"><label for="neetPdfFile">Choose original PDF (max 50 MB)</label><input id="neetPdfFile" type="file" accept="application/pdf,.pdf" aria-describedby="neetPdfSelectedFile"><div id="neetPdfSelectedFile" role="status" aria-live="polite" style="margin-top:8px;padding:10px 12px;border:1px dashed #455583;border-radius:10px;color:#aab5d7;font-size:12px;overflow-wrap:anywhere">No PDF selected yet.</div><button class="btn ghost" id="neetPdfClearFile" type="button" style="margin-top:7px;min-height:44px">Remove selected PDF</button></div>
+            <div class="field"><label for="neetPdfFile">Choose original PDF (max 50 MB)</label><input id="neetPdfFile" type="file" accept="application/pdf,.pdf" aria-describedby="neetPdfSelectedFile" onchange="window.neetPdfHandleFileSelection&&window.neetPdfHandleFileSelection(this)"><div id="neetPdfSelectedFile" role="status" aria-live="polite" style="margin-top:8px;padding:10px 12px;border:1px dashed #455583;border-radius:10px;color:#aab5d7;font-size:12px;overflow-wrap:anywhere">No PDF selected yet.</div><button class="btn ghost" id="neetPdfClearFile" type="button" style="margin-top:7px;min-height:44px">Remove selected PDF</button></div>
           </div>
           <button class="btn primary" id="neetPdfUploadBtn" type="button">Upload PDF to Supabase</button>
           <div style="margin-top:14px;padding:13px;border:1px solid #42588b;border-radius:12px;background:#111b36">
@@ -1507,8 +1507,10 @@ btn.addEventListener('click',async()=>{btn.disabled=true;btn.textContent='Updati
     finally{classXIIImportBtn.disabled=false;}
   });
 const pdfInput=$('neetPdfFile'),pdfPreview=$('neetPdfSelectedFile'),clearPdf=$('neetPdfClearFile');
- function syncSelectedPdf(){const file=pdfInput?.files?.[0];if(!pdfPreview)return;if(!file){pdfPreview.textContent='No PDF selected yet.';return;}const mb=(file.size/1024/1024).toFixed(2);pdfPreview.textContent='Selected: '+file.name+' · '+mb+' MB';}
- pdfInput?.addEventListener('change',syncSelectedPdf);pdfInput?.addEventListener('input',syncSelectedPdf);
+ function syncSelectedPdf(input=pdfInput){const file=input?.files?.[0];if(!pdfPreview)return;if(!file){pdfPreview.textContent='No PDF detected by the browser yet. Reopen the picker and choose the file, then tap Done/Open if shown.';return;}const mb=(file.size/1024/1024).toFixed(2);pdfPreview.textContent='Selected: '+file.name+' · '+mb+' MB';}
+ window.neetPdfHandleFileSelection=input=>syncSelectedPdf(input);
+ pdfInput?.addEventListener('change',()=>syncSelectedPdf());pdfInput?.addEventListener('input',()=>syncSelectedPdf());
+ document.addEventListener('change',e=>{if(e.target&&e.target.id==='neetPdfFile')syncSelectedPdf(e.target)},true);
  // Android document pickers can return focus before dispatching the file-input change event.
  window.addEventListener('focus',()=>setTimeout(syncSelectedPdf,350));
  clearPdf?.addEventListener('click',()=>{if(pdfInput)pdfInput.value='';syncSelectedPdf();});
