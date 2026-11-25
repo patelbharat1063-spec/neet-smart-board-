@@ -1537,7 +1537,8 @@ const pdfInput=$('neetPdfFile'),pdfPreview=$('neetPdfSelectedFile'),clearPdf=$('
  $('cloudNotesSubject')?.addEventListener('change',()=>{if(client)renderItems()});
  $('cloudNotesReload')?.addEventListener('click',()=>{if(client)loadItems().catch(e=>status(e?.message||String(e)))});
  window.addEventListener('neet-supabase-session-ready',()=>init());
- if(window.neetSupabaseClient)init();
+ // Initialize on page load too: restore the existing Supabase session even if the login event fired earlier.
+ init();
 })();
 </script>
 
